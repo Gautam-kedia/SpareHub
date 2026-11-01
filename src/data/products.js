@@ -3,6 +3,7 @@ import { jaggiParts } from './jaggiParts';
 import { masterCylinders, calipers } from './aaaParts';
 import { oroParts } from './oroParts';
 import { mkParts } from './mkParts';
+import { ltvsParts } from './ltvsParts';
 
 export const companies = [
   { id: 'swiss', name: 'Swiss Indicators', color: '#d97706' },
@@ -16,6 +17,7 @@ export const companies = [
   { id: 'aaa', name: 'AAA Spares', color: '#1e3a8a' },
   { id: 'oro', name: 'ORO Filters', color: '#0f9d76' },
   { id: 'mk', name: 'MK Lide', color: '#b91c1c' },
+  { id: 'ltvs', name: 'TVS Lucas - Self Motors', color: '#c2410c' },
 ];
 
 // Each entry: [name, price, image?]. Images live in public/images/.
@@ -150,7 +152,18 @@ const mk = mkParts.map((p) => ({
   image: p.image,
 }));
 
-export const parts = [...listedParts, ...jaggi, ...aaa, ...oro, ...mk];
+// LTVS: starter motors grouped by vehicle brand, at M.R.P. from the LTVS price list.
+const ltvs = ltvsParts.map(([partNo, category, model, mrp]) => ({
+  id: nextId++,
+  companyId: 'ltvs',
+  category,
+  name: `Starter Motor - ${model}`,
+  partNo,
+  price: mrp,
+  image: `/images/ltvs/${partNo}.png`,
+}));
+
+export const parts = [...listedParts, ...jaggi, ...aaa, ...oro, ...mk, ...ltvs];
 
 export const formatPrice = (n) =>
   '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });

@@ -26,7 +26,7 @@ export default function CompanyParts() {
             const cover = inCat.find((p) => p.image);
             return (
               <Link key={cat} to={`/company/${companyId}/${slug(cat)}`} className="card category-card">
-                {cover && <img className="part-img" src={cover.image} alt={cat} />}
+                {cover && <img className="part-img" src={cover.image} alt={cat} loading="lazy" decoding="async" width="600" height="600" />}
                 <div className="card-body">
                   <h3>{cat}</h3>
                   <small className="part-no">{inCat.length} items →</small>
