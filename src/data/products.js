@@ -4,6 +4,8 @@ import { masterCylinders, calipers } from './aaaParts';
 import { oroParts } from './oroParts';
 import { mkParts } from './mkParts';
 import { ltvsParts } from './ltvsParts';
+import { lumaxParts } from './lumaxParts';
+import { rolonParts } from './rolonParts';
 
 export const companies = [
   { id: 'swiss', name: 'Swiss Indicators', color: '#d97706' },
@@ -12,12 +14,13 @@ export const companies = [
   { id: 'bosch', name: 'Bosch Plugs', color: '#374151' },
   { id: 'jaggi', name: 'Jaggi Cables', color: '#4338ca' },
   { id: 'jesco', name: 'Jesco Tanks', color: '#15803d' },
-  { id: 'rolon', name: 'Rolon', color: '#9333ea' },
+  { id: 'rolon', name: 'Rolon Chain Sprocket', color: '#9333ea' },
   { id: 'jogindra', name: 'Jogindra Metal', color: '#57534e' },
   { id: 'aaa', name: 'AAA Spares', color: '#1e3a8a' },
   { id: 'oro', name: 'ORO Filters', color: '#0f9d76' },
   { id: 'mk', name: 'MK Lide', color: '#b91c1c' },
   { id: 'ltvs', name: 'TVS Lucas - Self Motors', color: '#c2410c' },
+  { id: 'lumax', name: 'Lumax', color: '#9d2a6e' },
 ];
 
 // Each entry: [name, price, image?]. Images live in public/images/.
@@ -68,12 +71,6 @@ const partsByCompany = {
     ['Fuel Tank - Discover 125', 3290], ['Fuel Tank Cap with Lock', 340],
     ['Petrol Tank Cock (Fuel Tap)', 185], ['Fuel Tank - CD 100', 2480],
   ],
-  rolon: [
-    ['Chain Sprocket Kit - Splendor', 980], ['Chain Sprocket Kit - Pulsar 150', 1450],
-    ['Chain Sprocket Kit - Apache 160', 1390], ['Timing Chain - Splendor', 310],
-    ['Cam Chain - Pulsar', 365], ['Drive Chain 428H 130L', 720],
-    ['Chain Sprocket Kit - Royal Enfield 350', 1980], ['Chain Tensioner', 245],
-  ],
   jogindra: [
     ['Crash Guard - Splendor', 690], ['Footrest Assembly - Pulsar', 540],
     ['Silencer Guard - Passion', 260], ['Rear Carrier - HF Deluxe', 480],
@@ -83,7 +80,7 @@ const partsByCompany = {
 };
 
 // Discount off M.R.P. per company (0.25 = 25% off). For these, the listed price is the M.R.P.
-const discounts = { swiss: 0.25, jaggi: 0.5 };
+const discounts = {};
 
 let nextId = 1;
 const listedParts = Object.entries(partsByCompany).flatMap(([companyId, list]) =>
@@ -94,6 +91,7 @@ const listedParts = Object.entries(partsByCompany).flatMap(([companyId, list]) =
       id: nextId++,
       companyId,
       name,
+      partNo: name.match(/\bDEUS-\w+/)?.[0], // Swiss blinker codes are part of the name
       price,
       mrp: discount ? listedPrice : undefined,
       discount,
@@ -163,7 +161,39 @@ const ltvs = ltvsParts.map(([partNo, category, model, mrp]) => ({
   image: `/images/ltvs/${partNo}.png`,
 }));
 
-export const parts = [...listedParts, ...jaggi, ...aaa, ...oro, ...mk, ...ltvs];
+// Lumax: 2W lighting by product type (category) and vehicle brand. M.R.P. not added yet.
+const lumax = lumaxParts.map((p) => ({
+  id: nextId++,
+  companyId: 'lumax',
+  category: p.category,
+  brand: p.brand,
+  name: p.name,
+  partNo: p.partNo,
+  price: p.mrp ?? null,
+  image: p.image,
+}));
+
+// Rolon: chain sprocket kits etc. from rolon.xlsx, grouped by vehicle family, at M.R.P. No photos.
+const rolon = rolonParts.map(([partNo, category, name, mrp]) => ({
+  id: nextId++,
+  companyId: 'rolon',
+  category,
+  name,
+  partNo,
+  price: mrp,
+}));
+
+// Split each name into an item description and the vehicle it fits (used in the order Excel).
+function withDescription(p) {
+  const [first, ...rest] = p.name.split(' - ');
+  if (p.companyId === 'lumax') return { ...p, vehicle: first, description: rest.join(' - ') };
+  if (p.companyId === 'oro') return { ...p, vehicle: p.category, description: p.name };
+  if (rest.length === 0) return { ...p, vehicle: p.category ?? '', description: p.name };
+  return { ...p, vehicle: rest.join(' - '), description: first };
+}
+
+export const parts = [...listedParts, ...jaggi, ...aaa, ...oro, ...mk, ...ltvs, ...lumax, ...rolon]
+  .map(withDescription);
 
 export const formatPrice = (n) =>
   '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });

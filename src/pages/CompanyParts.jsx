@@ -45,6 +45,12 @@ export default function CompanyParts() {
   }
   const shown = catName ? companyParts.filter((p) => p.category === catName) : companyParts;
 
+  // Parts tagged with a vehicle brand are shown in one section per brand.
+  const brands = [...new Set(shown.map((p) => p.brand).filter(Boolean))];
+  const groups = brands.length > 1
+    ? brands.map((b) => [b, shown.filter((p) => p.brand === b)])
+    : [[null, shown]];
+
   return (
     <>
       {catName && <Link to={`/company/${companyId}`} className="back-link">← All {company.name} categories</Link>}
@@ -52,11 +58,16 @@ export default function CompanyParts() {
       {shown.length === 0 ? (
         <p className="empty">No parts available yet.</p>
       ) : (
-        <div className="grid">
-          {shown.map((p) => (
-            <PartCard key={p.id} part={p} color={company.color} />
-          ))}
-        </div>
+        groups.map(([brand, list]) => (
+          <section key={brand ?? 'all'} className="brand-group">
+            {brand && <h2 className="brand-heading">{brand} <small>({list.length})</small></h2>}
+            <div className="grid">
+              {list.map((p) => (
+                <PartCard key={p.id} part={p} color={company.color} />
+              ))}
+            </div>
+          </section>
+        ))
       )}
     </>
   );
